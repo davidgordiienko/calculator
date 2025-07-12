@@ -1,12 +1,15 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View, Button, Text } from "react-native";
 import { useState } from "react";
+import InfoModal from "./components/InfoModal";
 
 export default function App() {
   const [num2, setnum2] = useState("");
   const [num1, setnum1] = useState("");
   const [output, setOutput] = useState("");
   const [operator, setOperator] = useState("");
+  const [memory, setMemory] = useState("");
+  const [isInfoVisible, setIsInfoVisible] = useState(false);
 
   /* The calculator stores the current number in num2.
   When an operator is pressed, the number entered before
@@ -15,6 +18,14 @@ export default function App() {
   right of the operator. Then, when the user presses
   the equal sign button, the calculation is solved
   and output to the user. */
+
+  function openInfoModal() {
+    setIsInfoVisible(true);
+  }
+
+  function closeInfoModal() {
+    setIsInfoVisible(false);
+  }
 
   function handleNumberPress(number) {
     if (operator === "") {
@@ -28,61 +39,174 @@ export default function App() {
     }
   }
 
-  function handleOperatorPress(op) {
-    if (num2 !== "") {
-      setOperator(op);
-      setOutput(num2 + " " + op);
-      setnum1(num2);
-      setnum2("");
-    } else {
-      setOutput("ENTER A NUMBER FIRST");
-    }
-  }
-
-  function handleEqualPress() {
-    if (num1 !== "" && num2 !== "") {
-      switch (operator) {
-        case "+":
-          setOutput((parseFloat(num1) + parseFloat(num2)).toString());
-          break;
-        case "-":
-          setOutput((parseFloat(num1) - parseFloat(num2)).toString());
-          break;
-        case "x":
-          setOutput((parseFloat(num1) * parseFloat(num2)).toString());
-          break;
-        case "/":
-          if (parseFloat(num2) !== 0) {
-            setOutput((parseFloat(num1) / parseFloat(num2)).toString());
-          } else {
-            setOutput("CANNOT DIVIDE BY ZERO");
-          }
-          break;
+  function handleDecimalPress() {
+    if (!num2.includes(".")) {
+      const newnum2 = (num2 || "0") + ".";
+      setnum2(newnum2);
+      if (operator === "") {
+        setOutput(newnum2);
+      } else {
+        setOutput(num1 + " " + operator + " " + newnum2);
       }
     }
   }
 
+  function handleNegativePress() {
+    if (num2 === "") {
+      const newnum2 = "-";
+      setnum2(newnum2);
+      if (operator === "") {
+        setOutput(newnum2);
+      } else {
+        setOutput(num1 + " " + operator + " " + newnum2);
+      }
+    } else if (num2 === "-") {
+      setnum2("");
+      if (operator === "") {
+        setOutput("");
+      } else {
+        setOutput(num1 + " " + operator);
+      }
+    } else if (num2.startsWith("-")) {
+      const newnum2 = num2.substring(1);
+      setnum2(newnum2);
+      if (operator === "") {
+        setOutput(newnum2);
+      } else {
+        setOutput(num1 + " " + operator + " " + newnum2);
+      }
+    } else {
+      const newnum2 = "-" + num2;
+      setnum2(newnum2);
+      if (operator === "") {
+        setOutput(newnum2);
+      } else {
+        setOutput(num1 + " " + operator + " " + newnum2);
+      }
+    }
+  }
+
+  function handleOperatorPress(op) {
+    if (num2 !== "" && operator === "") {
+      // First operator press
+      setOperator(op);
+      setOutput(num2 + " " + op);
+      setnum1(num2);
+      setnum2("");
+    } else if (num1 !== "" && operator !== "" && num2 !== "") {
+      // Chain operations: calculate current result first
+      const result = calculate();
+      if (result !== null) {
+        setOperator(op);
+        setnum1(result);
+        setnum2("");
+        setOutput(result + " " + op);
+      }
+    } else if (num1 !== "" && operator !== "" && num2 === "") {
+      // Change operator without number
+      setOperator(op);
+      setOutput(num1 + " " + op);
+    } else {
+      setOutput("ENTER NUM");
+    }
+  }
+
+  function calculate() {
+    if (num1 === "" || num2 === "" || operator === "") {
+      return null;
+    }
+
+    let result;
+    const n1 = parseFloat(num1);
+    const n2 = parseFloat(num2);
+
+    switch (operator) {
+      case "+":
+        result = (n1 + n2).toString();
+        break;
+      case "-":
+        result = (n1 - n2).toString();
+        break;
+      case "x":
+        result = (n1 * n2).toString();
+        break;
+      case "/":
+        if (n2 !== 0) {
+          result = (n1 / n2).toString();
+        } else {
+          setOutput("ERR: DIV BY 0");
+          return null;
+        }
+        break;
+      default:
+        return null;
+    }
+    return result;
+  }
+
+  function handleEqualPress() {
+    if (num1 !== "" && num2 !== "" && operator !== "") {
+      const result = calculate();
+      if (result !== null) {
+        setOutput(result);
+        setnum1("");
+        setnum2(result);
+        setOperator("");
+      }
+    }
+  }
+
+  function memoryRetrieve() {
+    if (memory !== "") {
+      setOutput("M: " + memory);
+      /*setnum2(memory);
+      setnum1("");
+      setOperator("");*/
+    } else {
+      setOutput("M: E");
+    }
+  }
+
+  function memoryStore() {
+    if (output !== "") {
+      setMemory(output);
+      setOutput("M+: " + output);
+    }
+  }
+
+  function memoryClear() {
+    setMemory("");
+    setOutput("MC");
+  }
   function Clear() {
     setnum2("");
     setnum1("");
     setOutput("");
     setOperator("");
   }
+
   return (
     <View style={styles.appContainer}>
       <View style={styles.calculatorContainer}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>Calculator v0.1.0</Text>
+          <View style={styles.infoButton}>
+            <Button title="Info" onPress={openInfoModal} />
+            <InfoModal visible={isInfoVisible} onCancel={closeInfoModal} />
+          </View>
+        </View>
         <View style={styles.outputContainer}>
           <Text style={styles.outputText}>{output}</Text>
         </View>
         <View style={styles.buttonRowContainer}>
           <View style={styles.button}>
-            <Button title="M" />
+            <Button title="M" onPress={memoryRetrieve} />
           </View>
           <View style={styles.button}>
-            <Button title="M+" />
+            <Button title="M+" onPress={memoryStore} />
           </View>
           <View style={styles.button}>
-            <Button title="MC" />
+            <Button title="MC" onPress={memoryClear} />
           </View>
           <View style={styles.button}>
             <Button title="/" onPress={() => handleOperatorPress("/")} />
@@ -135,10 +259,10 @@ export default function App() {
             <Button title="0" onPress={() => handleNumberPress("0")} />
           </View>
           <View style={styles.button}>
-            <Button title="." />
+            <Button title="." onPress={handleDecimalPress} />
           </View>
           <View style={styles.button}>
-            <Button title="(-)" />
+            <Button title="(-)" onPress={handleNegativePress} />
           </View>
           <View style={styles.button}>
             <Button title="=" onPress={() => handleEqualPress()} />
@@ -200,5 +324,26 @@ const styles = StyleSheet.create({
   outputText: {
     marginRight: 10,
     fontSize: 20,
+  },
+  titleContainer: {
+    borderColor: "black",
+    borderWidth: 1,
+    width: "98%",
+    height: 100,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  titleText: {
+    fontSize: 22,
+    textAlign: "left",
+    marginTop: 10,
+    marginLeft: 5,
+  },
+  infoButton: {
+    marginLeft: 45,
+    marginTop: 15,
+    width: 100,
+    height: 40,
   },
 });
