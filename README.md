@@ -12,3 +12,6 @@ This app is optimized for Android and has not been tested for iOS. It likely won
 
 ## Final Statement ##
 This app is definitely not the best it can be, and there is room for improvement (for example splitting the button rows into their own reusable React components, same with the buttons, and probably some improvements to the logic) However, I didn't want this to be a long-term project. Just a quick app I can build to practice and move on to learning new things. I might come back here and improve some things if I get bored or want to practice more. But for now, this app won't be replacing your phone calculator any time soon.
+
+## Download ##
+You can download an APK [here](https://github.com/davidgordiienko/calculator/releases/download/v1.0.0/calculator.apk). This APK was built using Expo Application Services (EAS) using the production profile. Android might give you a security or Play Protect warning when you open it, but this is only because the app isn't signed with a Google Play key, and it's nothing to worry about. Just your phone being cautious because you're installing an unsigned APK from outside the Play Store. But all the code is here, and if you really wanted to, you could rebuild the whole thing yourself to make sure the APK is untampered with.
